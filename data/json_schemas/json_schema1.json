@@ -1,0 +1,60 @@
+{
+	"schema_id" : 1
+	"tables" : [ 
+		"table_name": "EMPLOYEE"
+		"columns": [
+			{
+				"column_name" : "FNAME",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "MINIT",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "LNAME",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "SSN",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "BDATE",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "ADDRESS",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "SEX",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "SALARY",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "SUPER_SSN",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "DNO",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			},
+			{
+				"column_name" : "KEY",
+				"not_null" : "true",
+				"column_type" : "unknown"
+			}
