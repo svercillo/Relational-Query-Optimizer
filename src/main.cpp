@@ -46,16 +46,13 @@ int main(int argc, char ** argv) {
     char *input_file_name = argv[1];
     char * output_file_name = argv[2];
     ifstream f(input_file_name);
-    
+
     std::string input_contents = process_input_file(input_file_name);
     RelationalSchemaParser rsp = RelationalSchemaParser(input_contents);
-    Schema schema = rsp.fill_data_strucuture();
+    rsp.fill_data_strucuture();
 
-    JsonDumper json_dumper = JsonDumper(schema);
-
+    JsonDumper json_dumper = JsonDumper(rsp.schema);
     std::string output_contents = json_dumper.dump_contents();
-
-    cout << output_contents << endl;
     dump_output_file(output_file_name, output_contents);
     return 0;
 }

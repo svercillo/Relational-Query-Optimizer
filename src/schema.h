@@ -4,15 +4,18 @@
 
 #include "column.h"
 #include "table.h"
+#include "foreign_key.h"
 
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 
-class Schema{ 
+struct Schema{ 
     public:
-        std::map<std::string, Table> tables; // tables accesible by name
+        std::vector<Table *> table_vals;
+        std::unordered_map<std::string, Table *> tables; // tables accesible by name
+        std::unordered_map<std::string, std::vector<ForeignKey*> > foreign_keys;  // foreign keys
         int schema_id;
         Schema() : schema_id(1) {}
 };

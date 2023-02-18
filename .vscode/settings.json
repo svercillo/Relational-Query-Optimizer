@@ -67,6 +67,8 @@
         "filesystem": "cpp",
         "__tree": "cpp",
         "set": "cpp",
-        "map": "cpp"
-    }
+        "map": "cpp",
+        "unordered_set": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

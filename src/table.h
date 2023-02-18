@@ -1,16 +1,16 @@
 #ifndef TABLE_H
 #define TABLE_H
 
-#include "foreign_key.h"
 #include "primary_key.h"
 
+#include <unordered_map>
 #include <vector>
 
 struct Table{
     public:
-        std::vector<Column> columns;
-        PrimaryKey primary_key;
-        std::vector<ForeignKey> foreign_keys;
+        std::vector<Column*> column_vals;
+        std::unordered_map<std::string, Column *> columns;
+        PrimaryKey * primary_key;
         std::string table_name;
 
         Table(){}

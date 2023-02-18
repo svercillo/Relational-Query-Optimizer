@@ -1,0 +1,16 @@
+#ifndef COLUMN_TYPES_H
+#define COLUMN_TYPES_H
+
+#include <unordered_map>
+
+enum ColumnTypes
+{
+    COLUMNTYPES_INT,
+    COLUMNTYPES_FLOAT,
+    COLUMNTYPES_VARCHAR,
+    COLUMNTYPES_BYTE,
+    COLUMNTYPES_TEXT,
+    COLUMNTYPES_UNKNOWN,
+};
+
+#endif // COLUMN_TYPES_H

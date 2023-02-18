@@ -8,7 +8,7 @@
 struct Key
 {
     public:
-        std::vector<Column> key_columns;
+        std::vector<Column *> key_columns;
 };
 
 #endif // KEY_H
