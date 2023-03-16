@@ -3,7 +3,7 @@
 
 #include "column.h"
 #include "schema.h"
-
+#include <iostream>
 #include <string>
 #include <vector>
 

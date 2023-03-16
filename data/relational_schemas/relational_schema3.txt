@@ -1,7 +1,0 @@
-TABLE EMPLOYEE(Fname,Minit,Lname,Ssn,Bdate,Address,Sex,Salary,Super_ssn,Dno,PRIMARY KEY(Ssn));
-
-TABLE DEPARTMENT(Dname,Dnumber,Mgr_ssn,Mgr_start_date,PRIMARY KEY(Dnumber));
-
-FOREIGN KEY (DEPARTMENT(Mgr_ssn) REFERENCES EMPLOYEE(Ssn));
-
-FOREIGN KEY (DEPARTMENT(Dnumber) REFERENCES EMPLOYEE(SEX));

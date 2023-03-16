@@ -2,14 +2,16 @@
 #define RELATIONAL_SCHEMA_PARSER_H
 
 #include "schema.h"
-#include "word_types.h"
+#include "enums.h"
 #include "table.h"
 #include "foreign_key.h"
 #include "column_types.h"
+// #include "utils.h"
 
 #include <iostream>
 #include <vector>
 
+using namespace std;
 
 class RelationalSchemaParser{
     public:
@@ -19,7 +21,8 @@ class RelationalSchemaParser{
             this->contents = contents;
         }
         void fill_data_strucuture();
-        ~RelationalSchemaParser();
+        void release_memory();
+
     private:
         void process_table_statemeent(
             std::vector<std::string> primary_key_col_names,
@@ -40,7 +43,15 @@ class RelationalSchemaParser{
             std::vector<std::vector<std::string> > foreign_key_reference_col_names
         );
 
-        void release_memory();
+        std::string toupper(std::string value){
+            std::string upper = "";
+            for (int x = 0; x < value.length(); x++)
+                upper += std::toupper(value[x]);
+
+            return upper;
+        }
+
+
 };
 
 #endif // RELATIONAL_SCHEMA_PARSER_H

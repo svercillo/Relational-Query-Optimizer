@@ -9,16 +9,10 @@ std::unordered_map<std::string, ColumnTypes> column_types_map = {
     {"TEXT", COLUMNTYPES_TEXT}
 };
 
-std::string toupper(std::string value){
-    std::string upper = "";
-    for (int x = 0; x < value.length(); x++)
-        upper += std::toupper(value[x]);
-
-    return upper;
-}
-
 void RelationalSchemaParser::release_memory(){
     std::unordered_map<std::string, std::vector<ForeignKey *> > foreign_keys = this->schema->foreign_keys;
+    
+
     for (auto it = foreign_keys.begin(); it != foreign_keys.end(); it++)
     {
         ForeignKey * fk = it->second[0];
@@ -41,9 +35,6 @@ void RelationalSchemaParser::release_memory(){
     delete this->schema;
 }
 
-RelationalSchemaParser::~RelationalSchemaParser(){
-    release_memory();
-}
 
 void RelationalSchemaParser::fill_data_strucuture(){
     std::string contents = this->contents;
@@ -53,7 +44,7 @@ void RelationalSchemaParser::fill_data_strucuture(){
 
     int word_start = 0;
     int word_end = 0;
-    WordType last_word_type = _none;
+    SchemaWordTypes last_word_type = _none;
     Table *table = nullptr;
 
     bool is_foreign_key = false;
@@ -80,7 +71,7 @@ void RelationalSchemaParser::fill_data_strucuture(){
         {
             if (word_end - word_start > 0){
                 std::string word = toupper(contents.substr(word_start, word_end - word_start+1));
-                
+
                 switch (last_word_type)
                 {
                 case _none:

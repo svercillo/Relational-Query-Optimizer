@@ -2,9 +2,12 @@
 #define TABLE_H
 
 #include "primary_key.h"
+#include "statistics.h"
 
 #include <unordered_map>
 #include <vector>
+
+struct Statistics;
 
 struct Table{
     public:
@@ -12,6 +15,7 @@ struct Table{
         std::unordered_map<std::string, Column *> columns;
         PrimaryKey * primary_key;
         std::string table_name;
+        Statistics *statistics;
 
         Table(){}
 
