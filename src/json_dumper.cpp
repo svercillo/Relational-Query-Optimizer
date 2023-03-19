@@ -165,5 +165,7 @@ std::string JsonDumper::dump_contents(){
     contents += "\n\t]";
     contents += "\n}";
 
+
+    
     return contents;
 }

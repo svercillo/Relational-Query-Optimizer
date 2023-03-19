@@ -15,7 +15,9 @@ struct Schema{
     public:
         std::vector<Table *> table_vals;
         std::unordered_map<std::string, Table *> tables; // tables accesible by name
-        std::unordered_map<std::string, std::vector<ForeignKey*> > foreign_keys;  // foreign keys
+
+        // TODO: Change this to map
+        std::unordered_map<std::string, std::vector<ForeignKey*> > foreign_keys;  // foreign keys per table name
         int schema_id;
         Schema() : schema_id(1) {}
 };
