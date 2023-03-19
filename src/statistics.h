@@ -19,7 +19,7 @@ struct Statistics{
     std::unordered_map<std::vector<std::string>, double, vector_hash, vector_equal> column_tup_sizes;
     std::unordered_map<std::vector<std::string>, float, vector_hash, vector_equal> column_tup_rf;
     std::unordered_map<std::vector<std::string>, int, vector_hash, vector_equal> column_tup_index_height;
-    std::unordered_map<std::string, std::vector<int> > column_tup_range;
+    std::unordered_map<std::string, std::vector<int> > column_range;
 
     std::string to_string() {
         std::ostringstream oss;
@@ -42,7 +42,7 @@ struct Statistics{
             oss << "  " << vector_to_string(entry.first) << ": " << entry.second << std::endl;
         }
         oss << "Column tuple ranges: " << std::endl;
-        for (const auto& entry : this->column_tup_range) {
+        for (const auto& entry : this->column_range) {
             oss << "  " << entry.first << ": " << vector_to_string(entry.second) << std::endl;
         }
         return oss.str();
@@ -67,14 +67,3 @@ struct Statistics{
 };
 
 #endif // STATISTICS_H
-
-
-    // std::string to_string(){
-    //     std::string res = "";
-
-    //     res += "Cardinality: " + std::to_string(cardinality) + "\n";
-        
-    //     res += "Size: " + std::to_string(cardinality) + "\n";
-
-
-    // }

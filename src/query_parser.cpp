@@ -1,22 +1,25 @@
 #include "query_parser.h"
 
 void QueryParser::set_parent_and_child_pointers(){
-    unordered_map<string, Node *> * output_map_p = &this->output_map;
+    unordered_map<string, Node *> query_map = this->query_map;
 
-    cout << "OUTPUT SIZE " << (*output_map_p).size() << endl;
-    for (auto entry : (*output_map_p))
+    for (auto entry : query_map)
     {
         Node *node = entry.second;
         if (node->get_type() == "selection"){
             Selection *selection = dynamic_cast<Selection *>(node);
             string input_relation = selection->input_relation;
 
-            Node *child_node = (*output_map_p)[input_relation];
-            if (child_node == nullptr){
+            Node *child_node;
+            if (query_map.find(input_relation) == query_map.end()){
                 // if there are multiple uses of table A, it is represented as multiple new objects
                 child_node = (Node*) new BaseTable(input_relation); // potentially duplicated base table
+                this->query_map[input_relation] = child_node;
+            } else { 
+                child_node = query_map[input_relation];
             }
 
+            selection->child = child_node; // set child of parent node
             child_node->parent = node; // set child_node parent pointer
         }
         else if (node->get_type() == "projection")
@@ -24,12 +27,17 @@ void QueryParser::set_parent_and_child_pointers(){
             Projection *projection = dynamic_cast<Projection *>(node);
             string input_relation = projection->input_relation;
 
-            Node *child_node = (*output_map_p)[input_relation];
-            if (child_node == nullptr){
+            Node *child_node;
+            if (query_map.find(input_relation) == query_map.end()){
                 // if there are multiple uses of table A, it is represented as multiple new objects
-                child_node = (Node*) new BaseTable(input_relation); // potentially duplicated base table
+                cout << "CREATING BASE TABLE" << endl;
+                child_node = (Node *)new BaseTable(input_relation); // potentially duplicated base table
+                this->query_map[input_relation] = child_node; // set child_node
+            } else {
+                child_node = query_map[input_relation];
             }
 
+            projection->child = child_node; // set child of parent node
             child_node->parent = node; // set child_node parent pointer
         }
         else if (node->get_type() == "join")
@@ -39,34 +47,54 @@ void QueryParser::set_parent_and_child_pointers(){
             string left_table_name = join->left_table_name;
             string right_table_name = join->right_table_name;
 
-            Node *left_child_node = (*output_map_p)[left_table_name];
-            if (left_child_node == nullptr){
+            Node *left_child_node;
+
+            if (query_map.find(left_table_name) == query_map.end()){
                 // if there are multiple uses of table A, it is represented as multiple new objects
                 left_child_node = (Node*) new BaseTable(left_table_name); // potentially duplicated base table
+            } else {
+                left_child_node = query_map[left_table_name];
+                this->query_map[left_table_name] = left_child_node;
             }
 
-            Node *right_child_node = (*output_map_p)[right_table_name];
-            if (right_child_node == nullptr){
+            Node *right_child_node;
+            if (query_map.find(right_table_name) == query_map.end())
+            {
                 // if there are multiple uses of table A, it is represented as multiple new objects
                 right_child_node = (Node*) new BaseTable(right_table_name); // potentially duplicated base table
+                this->query_map[right_table_name] = right_child_node;
+            }
+            else
+            {
+                right_child_node = query_map[right_table_name];
             }
 
-            join->left_child = left_child_node;
-            join->right_child = right_child_node;
+            join->left_child = left_child_node; // set left child of parent node
+            join->right_child = right_child_node; // set left child of parent node
 
             left_child_node->parent = join; // set child_node parent pointer
             right_child_node->parent = join; // set child_node parent pointer
-
         }
     }
 };
 
+Node *QueryParser::get_root_node(){
+    for (auto entry : query_map)
+    {
+        Node *node = entry.second;
+        if (node->parent == nullptr) // parent was never set, because graph must be connected
+            return node;
+    }
+
+    cout << "No root node.. this is bad" << endl;
+    return nullptr; // no root node found.. this is bad
+};
 
 void QueryParser::fill_data_structures()
 {
-    // Copy the contents and output_map_p member pointer for easier access
+    // Copy the contents and query_map_p member pointer for easier access
     std::string contents = this->contents;
-    unordered_map<std::string, Node *>* output_map_p = &(this->output_map);
+    unordered_map<std::string, Node *>* query_map_p = &(this->query_map);
 
     // Initialize variables for word tracking and parsing
     int word_start = 0;
@@ -114,6 +142,60 @@ void QueryParser::fill_data_structures()
                         input_relation = word;
                         last_word_type = _input_relation;
                         break;
+                    case _selection: 
+                    {
+                        selection_col_name = word;
+                        last_word_type = _select_col_name;
+                        break;
+                    }
+                    case _select_comparision:
+                    {
+                        selection_col_value = word;
+                        last_word_type = _select_col_val;
+                        break;
+                    }
+                    case _projection:
+                    case _projection_col_name:
+                    {
+                        projection_cols.push_back(word);
+                        last_word_type = _projection_col_name;
+                        break;
+                    }
+                    case _join:
+                    {
+                        joined_table = word;
+                        last_word_type = _join_table;
+                        break;
+                    }
+                    case _join_table:
+                    {
+                        if (word != "ON"){
+                            std::cout << "INVALID JOIN STATEMENT" << std::endl;
+                            abort();
+                        }
+                        last_word_type = _joined_on;
+                        break;
+                    }
+                    case _joined_on:
+                    {
+                        joined_col_name1 = word;
+                        last_word_type = _join_col_name1;
+                        break;
+                    }
+                    case _join_col_name1: 
+                    {
+                        if (word != "="){
+                            std::cout << "INVALID JOIN STATEMENT" << std::endl;
+                        }
+                        last_word_type = _join_eqs;
+                        break;
+                    }
+                    case _join_eqs:
+                    {
+                        joined_col_name2 = word;
+                        last_word_type = _join_col_name2;
+                        break;
+                    }
                     default:
                         break;
                     }
@@ -138,7 +220,6 @@ void QueryParser::fill_data_structures()
                     {
                         if (word != "="){
                             std::cout << "INVALID STATEMENT" << std::endl;
-                            std::cout << word << std::endl;
                             abort();
                         }
 
@@ -192,7 +273,6 @@ void QueryParser::fill_data_structures()
                     }
                     case _join_table:
                     {
-                        cout << "join on  " << word << endl;
                         if (word != "ON"){
                             std::cout << "INVALID JOIN STATEMENT" << std::endl;
                             abort();
@@ -230,20 +310,19 @@ void QueryParser::fill_data_structures()
             {
                 switch (last_word_type)
                 {
-                case _select_col_val:
-                {
+                    case _select_col_val:
+                    {
+                        Selection *sel = new Selection(resultant_relation);
+                        sel->column_name = selection_col_name;
+                        sel->comparison_operator = selection_comparision;
+                        sel->comparison_value = stoi(selection_col_value);
+                        sel->input_relation = input_relation;
 
-                    
-                    Selection *sel = new Selection(resultant_relation);
-                    sel->column_name = selection_col_name;
-                    sel->comparison_operator = selection_comparision;
-                    sel->comparison_value = stoi(selection_col_value);
-                    sel->input_relation = input_relation;
+                        (*query_map_p)[resultant_relation] = sel;
 
-                    (*output_map_p)[resultant_relation] = sel;
-                    cout << sel->to_string() << endl;
+                        selection_comparision = "";
 
-                    break;
+                        break;
                     }
                     case _projection_col_name:
                     {
@@ -252,24 +331,25 @@ void QueryParser::fill_data_structures()
                         vector<string> column_names_cpy(projection_cols);
                         proj->column_names = column_names_cpy;
                         proj->input_relation = input_relation;
-                        (*output_map_p)[resultant_relation] = proj;
+                        (*query_map_p)[resultant_relation] = proj;
 
-                        cout << proj->to_string() << endl;
+                        cout << proj->to_string() << endl
+                             << endl;
+
                         projection_cols.clear(); // reset to null
                         break;
                     }
                     case _join_col_name2:
                     {
                         Join * join = new Join(resultant_relation);
-                        join->left_table_name = resultant_relation;
+                        join->left_table_name = input_relation;
                         join->right_table_name = joined_table;
 
                         // TODO parse col_names for A.a 
                         join->left_join_on_col = joined_col_name1;
                         join->right_join_on_col = joined_col_name2;
                         
-
-                        (*output_map_p)[resultant_relation] = join;
+                        (*query_map_p)[resultant_relation] = join;
                         cout << join->to_string() << endl;
 
                         break;
@@ -277,7 +357,7 @@ void QueryParser::fill_data_structures()
                     default: {
                         break;
                     }
-                    }
+                }
                 last_word_type = _none_;
             } 
             word_start = i + 1;

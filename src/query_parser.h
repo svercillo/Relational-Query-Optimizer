@@ -6,7 +6,6 @@
 #include <cassert>
 #include "table.h"
 #include "foreign_key.h"
-#include "query.h"
 #include "column_types.h"
 #include "statistics.h"
 #include "utils.h"
@@ -21,7 +20,7 @@ struct Statistics;
 
 class QueryParser{ // parses SQL queries and the statistics associated with tables
     public:
-        unordered_map<std::string, Node *> output_map;
+        
         QueryParser(std::string contents)
         {
             this->contents = contents;
@@ -31,9 +30,19 @@ class QueryParser{ // parses SQL queries and the statistics associated with tabl
         void set_parent_and_child_pointers();
         void fill_data_structures();
 
-        Node* root;
+        
+        Node *get_root_node();
+        
+        unordered_map<std::string, Node *> get_query_map(){
+            return this->query_map;
+        };
+
+
     private:
+        Node* root;
+        
         std::string contents;
+        unordered_map<std::string, Node *> query_map; // maps a temporary table to a data object 'Node'
 
         std::string toupper(std::string value){
             std::string upper = "";

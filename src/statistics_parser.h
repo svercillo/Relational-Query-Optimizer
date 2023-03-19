@@ -6,7 +6,6 @@
 #include <cassert>
 #include "table.h"
 #include "foreign_key.h"
-#include "query.h"
 #include "column_types.h"
 #include "statistics.h"
 
@@ -28,11 +27,14 @@ class StatisticsParser{
         void fill_data_structures();
 
         void print_stats();
-        
 
-    private:
+        std::unordered_map<std::string, Statistics* > get_statistics(){
+            return this->statistics_per_table;
+        };
+
+        private:
         std::string contents;
-        std::unordered_map<std::string, Statistics* > table_statistics;
+        std::unordered_map<std::string, Statistics* > statistics_per_table;
 
         std::string toupper(std::string value){
             std::string upper = "";
@@ -43,4 +45,4 @@ class StatisticsParser{
         }
 };
 
-#endif // STATISTICS_PARSER_H
+#endif //STATISTICS_PARSER_H

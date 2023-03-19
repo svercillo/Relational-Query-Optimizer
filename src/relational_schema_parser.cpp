@@ -289,6 +289,7 @@ void RelationalSchemaParser::process_table_statemeent(
     if (primary_key_col_names.size() > 0)
         primary_key->is_present = true;
 
+    bool first_iter = true;
     for (std::string col_name : primary_key_col_names)
     {
 
@@ -301,6 +302,11 @@ void RelationalSchemaParser::process_table_statemeent(
         }
 
         primary_key->key_columns.push_back(found->second);
+        
+        if (first_iter){ // only add hash index on the first index of a query
+            table->hash_index_col_names.insert(col_name);
+            first_iter = false;
+        }
     }
 
     table->primary_key = primary_key;
@@ -396,6 +402,7 @@ void RelationalSchemaParser::process_foriegn_key_statement(
     }
 
     Table * pTable = schema->tables.find(table_name)->second;
+    pTable->tree_index_col_names.insert(key_cols[1]); // add the first column as a b-tree index
     
     for (int i = 1; i < key_cols.size(); i++)
     {

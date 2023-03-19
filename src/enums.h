@@ -20,7 +20,6 @@ enum SchemaWordTypes
 
 enum ParserWordTypes
 {
-    
     _op_relation_name, //0 
     _input_relation, //1
     _operation_equals, //2

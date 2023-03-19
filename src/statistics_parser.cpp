@@ -17,14 +17,11 @@ std::pair<int, int> parse_range_values(std::vector<std::string> token_arr) {
     }
 
     return std::make_pair(start_range, end_range);
-}
+};
 
-
-
-
-std::string stats_to_string(const std::unordered_map<std::string, Statistics*>& table_statistics) {
+std::string stats_to_string(const std::unordered_map<std::string, Statistics*>& statistics_per_table) {
     std::string res;
-    for (auto it = table_statistics.begin(); it != table_statistics.end(); ++it) {
+    for (auto it = statistics_per_table.begin(); it != statistics_per_table.end(); ++it) {
         const std::string& table_name = it->first;
         Statistics* stats_ptr = it->second;
         res += table_name + "\n";
@@ -32,19 +29,20 @@ std::string stats_to_string(const std::unordered_map<std::string, Statistics*>& 
         res += "\n\n";
     }
     return res;
-}
-void StatisticsParser::print_stats(){
+};
+
+void StatisticsParser::print_stats()
+{
 
     std::string res;
-    res = stats_to_string(this->table_statistics);
+    res = stats_to_string(this->statistics_per_table);
 
-    std::cout << "PRINTING STATS: Length " << this->table_statistics.size() << "\n\n" << endl;
-
-
+    std::cout << "\nPRINTING STATS FOR " << this->statistics_per_table.size() << " TABLES: \n"
+              << endl;
     std::cout << res << std::endl;
 
     return;
-}
+};
 
 void StatisticsParser::fill_data_structures(){
     std::string contents = this->contents;
@@ -148,6 +146,7 @@ void StatisticsParser::fill_data_structures(){
                         if (statistic_values.size() < 1)
                         {
                             std::cout << "INVALID STATISTIC LINE" << std::endl;
+                            abort();
                         }
 
                         std::vector<std::string> token_arr = statistic_subject_strs;
@@ -160,22 +159,22 @@ void StatisticsParser::fill_data_structures(){
                         std::string table_name = token_arr[token_arr.size() - 1];
 
                         if (token_arr.size() == 1) {
-                            if (this->table_statistics.find(table_name) == this->table_statistics.end())
+                            if (this->statistics_per_table.find(table_name) == this->statistics_per_table.end())
                             {
                                 // new table statitics
                                 Statistics *table_stats = new Statistics();
-                                this->table_statistics.insert(make_pair(table_name, table_stats));
+                                this->statistics_per_table[table_name] = table_stats;
                             }
-                            
+
                             switch (statistic_type) {
                                 case STATISTICTYPE_CARDINALITY:
                                 {
-                                    this->table_statistics[table_name]->cardinality = std::stod(statistic_values[0]);
+                                    this->statistics_per_table[table_name]->cardinality = std::stod(statistic_values[0]);
                                     break;
                                 }
                                 case STATISTICTYPE_SIZE:
                                 {
-                                    this->table_statistics[table_name]->size = std::stod(statistic_values[0]);
+                                    this->statistics_per_table[table_name]->size = std::stod(statistic_values[0]);
                                     break;
                                 }
                                 default:
@@ -209,11 +208,11 @@ void StatisticsParser::fill_data_structures(){
                                 }
                             }   
 
-                            if (this->table_statistics.find(table_name) == this->table_statistics.end())
+                            if (this->statistics_per_table.find(table_name) == this->statistics_per_table.end())
                             {
                                 // new table statitics
                                 Statistics *table_stats = new Statistics();
-                                this->table_statistics.insert(make_pair(table_name, table_stats));
+                                this->statistics_per_table.insert(make_pair(table_name, table_stats));
                             }
                             
 
@@ -221,20 +220,20 @@ void StatisticsParser::fill_data_structures(){
                             {
                                 case STATISTICTYPE_CARDINALITY:
                                 {
-                                    this->table_statistics[table_name]->column_tup_cardinalities.insert(
+                                    this->statistics_per_table[table_name]->column_tup_cardinalities.insert(
                                         make_pair(col_names, std::stod(col_vals[0])));
 
                                     break;
                                 }
                                 case STATISTICTYPE_SIZE:
                                 {
-                                    this->table_statistics[table_name]->column_tup_sizes.insert(
+                                    this->statistics_per_table[table_name]->column_tup_sizes.insert(
                                         make_pair(col_names, std::stod(col_vals[0])));
                                     break;
                                 }
                                 case STATISTICTYPE_RF:
                                 {
-                                    this->table_statistics[table_name]->column_tup_rf.insert(
+                                    this->statistics_per_table[table_name]->column_tup_rf.insert(
                                         make_pair(col_names, std::stof(col_vals[0])));
                                 break;
                                 }
@@ -242,14 +241,14 @@ void StatisticsParser::fill_data_structures(){
                                 {
                                     std::pair<int, int> range = parse_range_values(col_vals);
                                     
-                                    this->table_statistics[table_name]->column_tup_range.insert(
+                                    this->statistics_per_table[table_name]->column_range.insert(
                                         make_pair(col_names[0], std::vector<int>{range.first, range.second}));
                                     
                                     break;
                                 }
                                 case STATISTICTYPE_HEIGHT:
                                 {
-                                    this->table_statistics[table_name]->column_tup_index_height.insert(
+                                    this->statistics_per_table[table_name]->column_tup_index_height.insert(
                                         make_pair(col_names, std::stoi(col_vals[0])));
 
                                     break;
@@ -283,4 +282,4 @@ void StatisticsParser::fill_data_structures(){
             word_end = i;
         }
     }
-}
+};

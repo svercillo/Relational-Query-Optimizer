@@ -34,6 +34,9 @@ run: all
 
 
 full: clean all
+	
+	echo "\n\n\nRUNNING PROGRAM :)"
+	./$(EXECUTABLE) $(INPUT_FILE) $(OUTPUT_FILE)
 
 debug: CXXFLAGS += -g
 debug: all

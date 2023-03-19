@@ -17,22 +17,29 @@ class RelationalSchemaParser{
     public:
         std::string contents;
         Schema* schema;
+        
         RelationalSchemaParser(std::string contents) {
             this->contents = contents;
         }
+        
         void fill_data_strucuture();
+        
         void release_memory();
-
+        
+        Schema *get_schema(){
+            return this->schema;
+        };
     private:
+
+        
         void process_table_statemeent(
             std::vector<std::string> primary_key_col_names,
             Table *table,
             Schema *schema,
             std::vector<std::string> column_vals,
             std::vector<std::string> foreign_key_reference_table_names,
-            std::vector<std::vector<std::string> > foreign_key_col_names,
-            std::vector<std::vector<std::string> > foreign_key_reference_col_names
-        );
+            std::vector<std::vector<std::string>> foreign_key_col_names,
+            std::vector<std::vector<std::string>> foreign_key_reference_col_names);
 
         void process_foriegn_key_statement(
             std::vector<std::string> primary_key_col_names,
