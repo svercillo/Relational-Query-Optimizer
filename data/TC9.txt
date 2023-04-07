@@ -1,8 +1,6 @@
-1 T1 W A
-2 T2 W B
-3 T3 W C
-4 T4 W D
-5 T1 R A
-6 T2 R B
-7 T3 R C
-8 T4 R D
+4 T1 W A
+5 T2 W B
+6 T1 R B
+7 T2 R A
+8 T1 C
+9 T2 C

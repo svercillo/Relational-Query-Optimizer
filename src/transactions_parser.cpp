@@ -11,6 +11,7 @@ void TransactionsParser::fill_data_structures(){
     WordType last_word_type = WORDTYPE_NULL;
     while (iss >> token)
     {
+        std::transform(token.begin(), token.end(), token.begin(), [](unsigned char c) { return std::toupper(c); });
         tokens.push_back(token);
         switch (last_word_type)
         {
