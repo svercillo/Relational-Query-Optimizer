@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <queue>
 #include <deque>
+#include <algorithm>
 
 #include "action_node.h"
 
@@ -16,7 +17,8 @@ class Scheduler
 { 
     public:
         virtual void schedule_tasks() = 0;
-        virtual ~Scheduler() {
+        ~Scheduler() {
+
             for (auto node : nodes){
                 delete node;
             }

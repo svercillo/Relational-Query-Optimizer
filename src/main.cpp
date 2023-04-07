@@ -61,7 +61,7 @@ int main(int argc, char ** argv) {
 
     delete parser;
     delete cascadeless_scheduler;
-    // delete recoverable_scheduler;
+    delete recoverable_scheduler;
 
     return 0;
 }

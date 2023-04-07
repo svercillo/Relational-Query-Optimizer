@@ -21,8 +21,7 @@ class CascadelessScheduler : public Scheduler
             populate_queue(actions);
         }
 
-        ~CascadelessScheduler() override{
-            // Scheduler::~Scheduler();
+        ~CascadelessScheduler(){
         }
 
         void schedule_tasks() override;
