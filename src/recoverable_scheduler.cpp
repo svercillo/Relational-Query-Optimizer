@@ -3,7 +3,7 @@
 
 void RecoverableScheduler::schedule_tasks(){ // can only occur after queue populated
 
-    while (!queue.empty()){
+    while (!queue.empty() && this->deadlock_time == -1){
         // print_queue();
         while(!queue.empty() && queue.top()->duplicate){
             delete queue.top();
@@ -125,13 +125,39 @@ void RecoverableScheduler::process_commit(ActionNode * top_node){
         trans_that_are_waiting_for_objs_to_commit.find(trans_id) != trans_that_are_waiting_for_objs_to_commit.end() 
         && trans_that_are_waiting_for_objs_to_commit[trans_id].size() > 0
     ){
-        // check if cycle / deadlock exists
-        for (auto object_id :  trans_that_are_waiting_for_objs_to_commit[trans_id]){
+
+        unordered_set<string> waiting_on_trans_id_vec;
+        
+        // // check if cycle / deadlock exists
+        // for (auto object_id :  trans_that_are_waiting_for_objs_to_commit[trans_id]){
+        //     string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
+
+        //     if (waiting_on_trans_id == "" || is_last_non_aborted_write_to_obj_committed(object_id)){
+        //         cout << "ERROR !!!!" << endl;
+        //         abort();
+        //     }
+
+        //     // guaranteed to be non-committed write (dirty read)
+        //     waiting_on_trans_id_vec.insert(waiting_on_trans_id);
+        // }
+
+        // for (auto dep_trans_id : waiting_on_trans_id_vec){
+        //     if (trans_that_are_waiting_for_objs_to_commit.find(dep_trans_id) == trans_that_are_waiting_for_objs_to_commit.end())
+        //         continue; // dep_trans_id was never waiting on anything
+
+        //     for (auto object_id : trans_that_are_waiting_for_objs_to_commit[dep_trans_id]){
+        //         string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
+
+        //         if (waiting_on_trans_id == trans_id){
+        //             this->deadlock_time = this->current_execution_time;
+                    
+                    
+        //             // delete top_node;    // TODO: add this line
+        //             return;
+        //         }
+        //     }
             
-        }
-
-
-
+        // }
 
         push_action_into_waiting(trans_id, top_node); 
     } else {
