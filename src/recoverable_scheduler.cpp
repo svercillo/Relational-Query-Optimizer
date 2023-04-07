@@ -6,6 +6,7 @@ void RecoverableScheduler::schedule_tasks(){ // can only occur after queue popul
     while (!queue.empty()){
         // print_queue();
         while(!queue.empty() && queue.top()->duplicate){
+            delete queue.top();
             queue.pop(); // pop any duplicates off
         }
 
@@ -18,7 +19,6 @@ void RecoverableScheduler::schedule_tasks(){ // can only occur after queue popul
         ActionNode *top_node = queue.top();
         queue.pop(); // pop node from queue
         
-        top_node->in_waiting_state = false; // no longer blocked
         switch(top_node->action->operation_type){
             case OPERATIONTYPE_WRITE:
             {
@@ -58,11 +58,12 @@ void RecoverableScheduler::process_write(ActionNode *top_node){
     string trans_id = top_node->action->trans_id;
 
     if (aborted_transactions.find(trans_id) != aborted_transactions.end()){
-        // do nothing because transaction was aborted and can no longer be completed
+        // deallocaten node
+        delete top_node;
         return;
     }
 
-        // add the transaction to set of all transactions that have written to it's object
+    // add the transaction to set of all transactions that have written to it's object
     if (obj_trans_have_written_to.find(object_id) == obj_trans_have_written_to.end())
         obj_trans_have_written_to.emplace(object_id, vector<string>{});
     
@@ -77,7 +78,8 @@ void RecoverableScheduler::process_read(ActionNode * top_node){
 
 
     if (aborted_transactions.find(trans_id) != aborted_transactions.end()){
-        // do nothing because transaction was aborted and can no longer be completed
+        // deallocaten node
+        delete top_node;
         return;
     }
 
@@ -113,7 +115,8 @@ void RecoverableScheduler::process_commit(ActionNode * top_node){
     
 
     if (aborted_transactions.find(trans_id) != aborted_transactions.end()){
-        // do nothing because transaction was aborted and can no longer be completed
+        // deallocaten node
+        delete top_node;
         return;
     }
 
@@ -122,6 +125,14 @@ void RecoverableScheduler::process_commit(ActionNode * top_node){
         trans_that_are_waiting_for_objs_to_commit.find(trans_id) != trans_that_are_waiting_for_objs_to_commit.end() 
         && trans_that_are_waiting_for_objs_to_commit[trans_id].size() > 0
     ){
+        // check if cycle / deadlock exists
+        for (auto object_id :  trans_that_are_waiting_for_objs_to_commit[trans_id]){
+            
+        }
+
+
+
+
         push_action_into_waiting(trans_id, top_node); 
     } else {
         top_node->in_waiting_state = false; // no longer blocked
@@ -146,11 +157,13 @@ void RecoverableScheduler::process_abort(ActionNode * top_node){
     deque<ActionNode*> q;
 
     if (aborted_transactions.find(top_node->action->trans_id) != aborted_transactions.end()){
-        // do nothing because transaction was aborted and can no longer be completed
+        // deallocaten node
+        delete top_node;
         return;
     }
     
     q.push_back(top_node);
+    bool first_iter = true;
 
     while (q.size() > 0 ){
         top_node = q.front();
@@ -158,7 +171,7 @@ void RecoverableScheduler::process_abort(ActionNode * top_node){
 
         string trans_id = top_node->action->trans_id;;
         q.pop_front();
-    
+
         if (
             committed_transactions.find(trans_id) != committed_transactions.end() 
             || aborted_transactions.find(trans_id) != aborted_transactions.end()
@@ -179,7 +192,7 @@ void RecoverableScheduler::process_abort(ActionNode * top_node){
             Action *abort_action = new Action(this->current_execution_time, dep_trans_id, OPERATIONTYPE_ABORT); // TODO DELETE THIS POINTER
             ActionNode * abort_node = new ActionNode(abort_action); // TODO DELETE THIS POINTER
 
-            // cout << abort_action->to_string() << endl;
+            dupliate_abort_actions_created.push_back(abort_action);
             q.push_back(abort_node);
         }
     }

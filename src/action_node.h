@@ -25,12 +25,18 @@ struct ActionNode
             }
         }
 
+        ActionNode(){}
+        
         ActionNode(const Action* action){
             this->action = action;
         }
 
         ActionNode(ActionNode* other){
             this->action = other->action;
+        }
+
+        ~ActionNode(){
+            // don't deallocate action
         }
 
         string to_string() const {

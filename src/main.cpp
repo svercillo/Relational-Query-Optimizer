@@ -45,23 +45,24 @@ int main(int argc, char ** argv) {
     std::string input_contents = get_input_string(input_file_name);
 
     TransactionsParser * parser = new TransactionsParser(input_contents);
-    CascadelessScheduler * cascadeless_scheduler;
-    // RecoverableScheduler * recoverable_scheduler;
+    // CascadelessScheduler * cascadeless_scheduler;
+    RecoverableScheduler * recoverable_scheduler;
 
     vector<const Action *> actions_vec = parser->actions_vec;
 
-    cascadeless_scheduler = new CascadelessScheduler(actions_vec);
-    cascadeless_scheduler->schedule_tasks();
+    // cascadeless_scheduler = new CascadelessScheduler(actions_vec);
+    // cascadeless_scheduler->schedule_tasks();
 
-    // recoverable_scheduler = new RecoverableScheduler(actions_vec);
-    // recoverable_scheduler->schedule_tasks();
+    recoverable_scheduler = new RecoverableScheduler(actions_vec);
+    recoverable_scheduler->schedule_tasks();
 
-    std::cout << cascadeless_scheduler->to_string() << endl;
-    // std::cout << recoverable_scheduler->to_string() << endl;
+    // std::cout << cascadeless_scheduler->to_string() << endl;
+    std::cout << recoverable_scheduler->to_string() << endl;
+    
 
     delete parser;
-    delete cascadeless_scheduler;
-    // delete recoverable_scheduler;
+    // delete cascadeless_scheduler;
+    delete recoverable_scheduler;
 
     return 0;
 }

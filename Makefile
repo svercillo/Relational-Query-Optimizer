@@ -25,7 +25,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	g++ -std=c++11 -c $< -o $@ -Wno-c++11-extensions
 
 
-valgrind: all
+valgrind: full
 	valgrind --leak-check=full ./$(EXECUTABLE) $(INPUT_FILE) $(OUTPUT_FILE)
 
 clean:

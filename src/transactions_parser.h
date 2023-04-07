@@ -26,6 +26,11 @@ class TransactionsParser{
             fill_data_structures();
         }
 
+        ~TransactionsParser(){
+            for (auto action : actions_vec){
+                delete action;
+            }
+        }
     private:
         string contents;
         

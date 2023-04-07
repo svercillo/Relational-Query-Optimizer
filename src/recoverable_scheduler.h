@@ -21,6 +21,12 @@ class RecoverableScheduler : public Scheduler
         RecoverableScheduler(vector<const Action *> actions){
             populate_queue(actions);
         }
+
+        ~RecoverableScheduler(){
+            for (auto node : dupliate_abort_actions_created){
+                delete node;
+            }
+        }
         
         void schedule_tasks() override;
 
@@ -60,6 +66,8 @@ class RecoverableScheduler : public Scheduler
 
         // for a given object, all the actions that are waiting on this object to be committed (in any transaction)
         unordered_map<string, unordered_set<ActionNode*>> obj_nodes_are_waiting_on;
+
+        vector<Action *> dupliate_abort_actions_created;
 };
 
 #endif // 

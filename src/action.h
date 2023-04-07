@@ -28,6 +28,14 @@ struct Action
             return this->time_offset < other.time_offset;
         }
 
+        Action(const Action * other)
+        {
+            this->time_offset = other->time_offset;
+            this->trans_id = other->trans_id;
+            this->operation_type = other->operation_type;
+            this->object_id = other->object_id;
+        }
+
         Action(int time_offset, string trans_id, OperationType operation_type)
         {
             this->time_offset = time_offset;
