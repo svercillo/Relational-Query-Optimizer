@@ -6,6 +6,8 @@ void CascadelessScheduler::schedule_tasks(){ // can only occur after queue popul
 
         // print_queue();
         while(!queue.empty() && queue.top()->duplicate){
+            delete queue.top()->action;
+            delete queue.top();
             queue.pop(); // pop any duplicates off
         }
 

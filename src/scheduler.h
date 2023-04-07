@@ -18,9 +18,17 @@ class Scheduler
     public:
         virtual void schedule_tasks() = 0;
         ~Scheduler() {
+            cout << "Destructing Scheduler" << endl << endl;
 
             for (auto node : nodes){
+                delete node->action;
                 delete node;
+            }
+
+            while (!queue.empty()){
+                delete queue.top()->action;
+                delete queue.top();
+                queue.pop();
             }
         }   
 
