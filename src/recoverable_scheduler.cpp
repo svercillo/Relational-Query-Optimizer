@@ -6,7 +6,6 @@ void RecoverableScheduler::schedule_tasks(){ // can only occur after queue popul
     while (!queue.empty() && this->deadlock_time == -1){
         // print_queue();
         while(!queue.empty() && queue.top()->duplicate){
-            delete queue.top();
             queue.pop(); // pop any duplicates off
         }
 
@@ -57,9 +56,10 @@ void RecoverableScheduler::process_write(ActionNode *top_node){
     string object_id = top_node->action->object_id;
     string trans_id = top_node->action->trans_id;
 
-    if (aborted_transactions.find(trans_id) != aborted_transactions.end()){
-        // deallocaten node
-        delete top_node;
+    if (
+        aborted_transactions.find(top_node->action->trans_id) != aborted_transactions.end()
+        || this->deadlock_time != -1 // meaning deadlock occured
+    ){
         return;
     }
 
@@ -77,9 +77,10 @@ void RecoverableScheduler::process_read(ActionNode * top_node){
     string trans_id = top_node->action->trans_id;
 
 
-    if (aborted_transactions.find(trans_id) != aborted_transactions.end()){
-        // deallocaten node
-        delete top_node;
+    if (
+        aborted_transactions.find(top_node->action->trans_id) != aborted_transactions.end()
+        || this->deadlock_time != -1 // meaning deadlock occured
+    ){
         return;
     }
 
@@ -99,11 +100,11 @@ void RecoverableScheduler::process_read(ActionNode * top_node){
         if (all_trans_ids_which_dirty_read_from_trans_id.find(trans_id) == all_trans_ids_which_dirty_read_from_trans_id.end())
             all_trans_ids_which_dirty_read_from_trans_id.emplace(trans_id, unordered_set<string>{});
 
-        // trans_id dirty reads last_non_aborted_write_trans_id
-        all_trans_ids_which_dirty_read_from_trans_id[last_non_aborted_write_trans_id].insert(trans_id); 
-
         // indicates that trans_id must wait until object becomes committed (last non-abort write must not exist or be committed)
         trans_that_are_waiting_for_objs_to_commit[trans_id].insert(object_id);
+
+        // last_non_aborted_write_trans_id is read dirtily from trans_id  
+        all_trans_ids_which_dirty_read_from_trans_id[last_non_aborted_write_trans_id].insert(trans_id); 
     }
 
     // we can do read right now
@@ -113,10 +114,10 @@ void RecoverableScheduler::process_read(ActionNode * top_node){
 void RecoverableScheduler::process_commit(ActionNode * top_node){
     string trans_id = top_node->action->trans_id;
     
-
-    if (aborted_transactions.find(trans_id) != aborted_transactions.end()){
-        // deallocaten node
-        delete top_node;
+    if (
+        aborted_transactions.find(top_node->action->trans_id) != aborted_transactions.end()
+        || this->deadlock_time != -1 // meaning deadlock occured
+    ){
         return;
     }
 
@@ -128,38 +129,41 @@ void RecoverableScheduler::process_commit(ActionNode * top_node){
 
         unordered_set<string> waiting_on_trans_id_vec;
         
-        // // check if cycle / deadlock exists
-        // for (auto object_id :  trans_that_are_waiting_for_objs_to_commit[trans_id]){
-        //     string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
+        // check if cycle / deadlock exists
+        for (auto object_id :  trans_that_are_waiting_for_objs_to_commit[trans_id]){
+            string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
 
-        //     if (waiting_on_trans_id == "" || is_last_non_aborted_write_to_obj_committed(object_id)){
-        //         cout << "ERROR !!!!" << endl;
-        //         abort();
-        //     }
+            bool a = committed_transactions.find(waiting_on_trans_id) == committed_transactions.end();
+            if (waiting_on_trans_id == "" || is_last_non_aborted_write_to_obj_committed(object_id)){
+                cout << "ERROR !!!!" << endl;
+                cout << "trans_id " << trans_id << endl;
+                cout << "waiting_on_trans_id " << waiting_on_trans_id << endl; 
+                cout << a << endl;
+                cout << is_last_non_aborted_write_to_obj_committed(object_id) << endl;
+                abort();
+            }
 
-        //     // guaranteed to be non-committed write (dirty read)
-        //     waiting_on_trans_id_vec.insert(waiting_on_trans_id);
-        // }
+            // guaranteed to be non-committed write (dirty read)
+            waiting_on_trans_id_vec.insert(waiting_on_trans_id);
+        }
 
-        // for (auto dep_trans_id : waiting_on_trans_id_vec){
-        //     if (trans_that_are_waiting_for_objs_to_commit.find(dep_trans_id) == trans_that_are_waiting_for_objs_to_commit.end())
-        //         continue; // dep_trans_id was never waiting on anything
+        for (auto dep_trans_id : waiting_on_trans_id_vec){
+            if (trans_that_are_waiting_for_objs_to_commit.find(dep_trans_id) == trans_that_are_waiting_for_objs_to_commit.end())
+                continue; // dep_trans_id was never waiting on anything
 
-        //     for (auto object_id : trans_that_are_waiting_for_objs_to_commit[dep_trans_id]){
-        //         string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
+            for (auto object_id : trans_that_are_waiting_for_objs_to_commit[dep_trans_id]){
+                string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
 
-        //         if (waiting_on_trans_id == trans_id){
-        //             this->deadlock_time = this->current_execution_time;
-                    
-                    
-        //             // delete top_node;    // TODO: add this line
-        //             return;
-        //         }
-        //     }
-            
-        // }
+                if (waiting_on_trans_id == trans_id){
+                    // cycle / deadlock detected
+                    this->deadlock_time = max(this->current_execution_time, top_node->action->time_offset);
+                }
+            }
+        }
 
-        push_action_into_waiting(trans_id, top_node); 
+        if (deadlock_time == -1)
+            push_action_into_waiting(trans_id, top_node); 
+
     } else {
         top_node->in_waiting_state = false; // no longer blocked
     
@@ -174,6 +178,8 @@ void RecoverableScheduler::process_commit(ActionNode * top_node){
         }
         // commit transaction
         committed_transactions.insert(trans_id);
+
+        // cout << "Processing commit " << top_node << endl;
         insert_node_into_schedule(top_node);
     }
 }
@@ -182,9 +188,10 @@ void RecoverableScheduler::process_abort(ActionNode * top_node){
  
     deque<ActionNode*> q;
 
-    if (aborted_transactions.find(top_node->action->trans_id) != aborted_transactions.end()){
-        // deallocaten node
-        delete top_node;
+    if (
+        aborted_transactions.find(top_node->action->trans_id) != aborted_transactions.end()
+        || this->deadlock_time != -1 // meaning deadlock occured
+    ){
         return;
     }
     
@@ -217,6 +224,7 @@ void RecoverableScheduler::process_abort(ActionNode * top_node){
             // create a new abort
             Action *abort_action = new Action(this->current_execution_time, dep_trans_id, OPERATIONTYPE_ABORT); // TODO DELETE THIS POINTER
             ActionNode * abort_node = new ActionNode(abort_action); // TODO DELETE THIS POINTER
+            this->all_created_nodes.push_back(abort_node);
 
             dupliate_abort_actions_created.push_back(abort_action);
             q.push_back(abort_node);
@@ -261,6 +269,7 @@ void RecoverableScheduler::move_waiting_nodes(string object_id, string trans_id)
 
         action_node->duplicate = true; // set current node to duplicate
         ActionNode *copy_node = new ActionNode(action_node);
+        all_created_nodes.push_back(copy_node);
         queue.push(copy_node); // action is no longer waiting
 
         // trans_id is no longer waiting (its being committed)
@@ -309,7 +318,7 @@ bool RecoverableScheduler::is_last_non_aborted_write_to_obj_committed(string obj
 
     if (last_non_aborted_write_trans_id == "")
         return true; // no writes remain
-    else if (committed_transactions.find(last_non_aborted_write_trans_id) == committed_transactions.end())
+    else if (committed_transactions.find(last_non_aborted_write_trans_id) != committed_transactions.end())
         return true; // last write is committed
     else
         return false;

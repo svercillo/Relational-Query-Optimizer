@@ -6,10 +6,6 @@ DATA_DIR=data
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 EXECUTABLE = $(BIN_DIR)/main
-
-
-INPUT_FILE = $(DATA_DIR)/TC$(FILE_SUFFIX).txt
-OUTPUT_FILE = $(DATA_DIR)/output$(FILE_SUFFIX).json
  
 all: create_folders $(EXECUTABLE)  
 
@@ -26,7 +22,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 
 valgrind: full
-	valgrind --leak-check=full ./$(EXECUTABLE) $(INPUT_FILE) $(OUTPUT_FILE)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(EXECUTABLE) $(INPUT_FILE) $(OUTPUT_FILE)
 
 clean:
 	rm -f $(OBJ_DIR)/*.o $(EXECUTABLE)
@@ -34,9 +30,7 @@ clean:
 run: all 
 
 	echo "\n\n\nRUNNING PROGRAM :)"
-	./$(EXECUTABLE) $(INPUT_FILE) $(OUTPUT_FILE)
-
-
+	./$(EXECUTABLE) $(INPUT_FILE) $(BONUS)
 full: clean all
 	
 	echo "\n\n\nRUNNING PROGRAM :)"

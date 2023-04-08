@@ -4,6 +4,7 @@ void Scheduler::populate_queue(vector<const Action *> actions){
     for (auto action : actions){
         ActionNode *node = new ActionNode(action);
         queue.push(node);
+        all_created_nodes.push_back(node);
 
         if (action->operation_type == OPERATIONTYPE_WRITE){
             if (transaction_writes.find(action->trans_id) == transaction_writes.end())
@@ -36,7 +37,12 @@ string Scheduler::to_string(){
     for (auto node : nodes){
         res += node->to_string() + "\n";
     }
+    
+    if (this->deadlock_time != -1){
+        res += "DEADLOCK DETECTED AT TIME " + std::to_string(this->deadlock_time) + "\n";
+    }
 
+    res += "\n";
     return res;
 }
 

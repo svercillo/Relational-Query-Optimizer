@@ -1,11 +1,11 @@
-#ifndef RECOVERABLE_SCHEULER_H
-#define RECOVERABLE_SCHEULER_H
+
+#ifndef serial_scheduler_H
+#define serial_scheduler_H
 
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
-#include <deque>
 
 
 #include "scheduler.h"
@@ -15,19 +15,13 @@
 
 using namespace std;
 
-class RecoverableScheduler : public Scheduler
+class SerializableScheduler : public Scheduler
 { 
     public:
-        RecoverableScheduler(vector<const Action *> actions){
+        SerializableScheduler(vector<const Action *> actions){
             populate_queue(actions);
         }
 
-        ~RecoverableScheduler(){
-            for (auto action : dupliate_abort_actions_created){
-                delete action;
-            }
-        }
-        
         void schedule_tasks() override;
 
     private:
@@ -43,31 +37,28 @@ class RecoverableScheduler : public Scheduler
 
         string get_schedule_name() override;
 
-        string get_last_non_aborted_write_trans_id(string object_id);
+        void move_waiting_reads(string object_id, string trans_id);
 
-        void move_waiting_nodes(string object_id, string trans_id);
+        string get_last_non_aborted_write_trans_id(string object_id);
 
         bool is_last_non_aborted_write_to_obj_committed(string object_id);
 
         bool is_trans_last_to_write_to_obj(string object_id, string trans_id);
 
         bool is_dirty_read(string object_id, string trans_id);
+        
+        void push_node(ActionNode * node);
 
-        void push_action_into_waiting(string trans_id, ActionNode *top_node);
+        unordered_map<string, vector<ActionNode*>> actions_per_transaction;
 
-        // for uncommited/unaborted actions, the key is object,
-        // value is a list of the transactions in the order that they have written to this object
-        unordered_map<string, vector<string>> obj_trans_have_written_to;
+        unordered_set<string> obj_locks;
 
-
-        unordered_map<string, unordered_set<string>> trans_that_are_waiting_for_objs_to_commit;
-
-        unordered_map<string, unordered_set<string>> all_trans_ids_which_dirty_read_from_trans_id;
+        unordered_map<string, unordered_set<string>> locks_held_by_trans_id;
 
         // for a given object, all the actions that are waiting on this object to be committed (in any transaction)
         unordered_map<string, unordered_set<ActionNode*>> obj_nodes_are_waiting_on;
 
-        vector<Action *> dupliate_abort_actions_created;
+        unordered_map<string, unordered_set<string>> objs_trans_are_waiting_on;
 };
 
-#endif // 
+#endif // serial_scheduler_H

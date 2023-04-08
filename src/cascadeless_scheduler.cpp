@@ -6,7 +6,6 @@ void CascadelessScheduler::schedule_tasks(){ // can only occur after queue popul
 
         // print_queue();
         while(!queue.empty() && queue.top()->duplicate){
-            delete queue.top();
             queue.pop(); // pop any duplicates off
         }
 
@@ -29,6 +28,9 @@ void CascadelessScheduler::schedule_tasks(){ // can only occur after queue popul
             }
             case OPERATIONTYPE_READ: // can have deadlock on reads
             {   
+                if (top_node->in_waiting_state){
+                    this->deadlock_time = max(this->current_execution_time, top_node->action->time_offset);
+                }
                 process_read(top_node);
                 break;
             }
@@ -56,6 +58,8 @@ void CascadelessScheduler::schedule_tasks(){ // can only occur after queue popul
 }
 
 void CascadelessScheduler::process_write(ActionNode *top_node){
+    if (this->deadlock_time != -1)
+        return;
 
     string object_id = top_node->action->object_id;
     string trans_id = top_node->action->trans_id;
@@ -72,10 +76,14 @@ void CascadelessScheduler::process_write(ActionNode *top_node){
 void CascadelessScheduler::process_read(ActionNode * top_node){
     string object_id = top_node->action->object_id;
     string trans_id = top_node->action->trans_id;
+
+    if (this->deadlock_time != -1)
+        return;
     
     if (is_dirty_read(object_id, trans_id))
     {
-        // cout << "DIRTY READ: " << top_node->to_string() << endl;
+        // Check cycle
+        string last_write_to_obj_trans_id = get_last_non_aborted_write_trans_id(object_id); // last write is uncommited
 
         // check if the object this action is reading from is uncommited write which is not from its own transaction
         if (trans_waiting_on_objs.find(trans_id) == trans_waiting_on_objs.end())
@@ -111,6 +119,9 @@ void CascadelessScheduler::process_read(ActionNode * top_node){
 void CascadelessScheduler::process_commit(ActionNode * top_node){
     string trans_id = top_node->action->trans_id;
     
+    if (this->deadlock_time != -1)
+        return;
+
     // check if transaction is blocked on uncommitter write
     if (
         trans_waiting_on_objs.find(trans_id) != trans_waiting_on_objs.end() 
@@ -141,9 +152,9 @@ void CascadelessScheduler::process_commit(ActionNode * top_node){
 void CascadelessScheduler::process_abort(ActionNode *top_node){
     string trans_id = top_node->action->trans_id;
 
+    if (this->deadlock_time != -1)
+        return;
     
-
-
     // check if transaction is blocked on uncommitter write
     if (
         trans_waiting_on_objs.find(trans_id) != trans_waiting_on_objs.end() 
@@ -153,15 +164,6 @@ void CascadelessScheduler::process_abort(ActionNode *top_node){
         queue.push(top_node);
 
     } else {
-        
-
-        // if (top_node->action->trans_id == "T1"){
-        //     cout << endl;
-        //     cout << endl;
-        //     cout << endl;
-        //     abort();
-        // }
-
         // abort transaction before checking if last write to objects are committed
         aborted_transactions.insert(trans_id);
 
@@ -197,6 +199,7 @@ void CascadelessScheduler::move_waiting_reads(string object_id, string trans_id)
 
         action_node->duplicate = true; // set current node to duplicate
         ActionNode *copy_node = new ActionNode(action_node);
+        all_created_nodes.push_back(copy_node);
         queue.push(copy_node); // action is no longer waiting
 
         // trans_id is no longer waiting (its being committed)
@@ -249,7 +252,7 @@ bool CascadelessScheduler::is_last_non_aborted_write_to_obj_committed(string obj
 
     if (last_non_aborted_write_trans_id == "")
         return true; // no writes remain
-    else if (committed_transactions.find(last_non_aborted_write_trans_id) == committed_transactions.end())
+    else if (committed_transactions.find(last_non_aborted_write_trans_id) != committed_transactions.end())
         return true; // last write is committed
     else
         return false;
