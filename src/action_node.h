@@ -15,6 +15,7 @@ struct ActionNode
         const Action * action; // should be an immutable reference
         int exec_time = -1;
         bool in_waiting_state = false;
+        bool in_waiting_for_par_state = false;
         bool duplicate = false;
 
         bool operator>(const ActionNode& other) const {

@@ -21,8 +21,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	g++ -std=c++11 -c $< -o $@ -Wno-c++11-extensions
 
 
-valgrind: full
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(EXECUTABLE) $(INPUT_FILE) $(OUTPUT_FILE)
+valgrind: all
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(EXECUTABLE) $(INPUT_FILE) $(BONUS)
 
 clean:
 	rm -f $(OBJ_DIR)/*.o $(EXECUTABLE)
@@ -34,7 +34,7 @@ run: all
 full: clean all
 	
 	echo "\n\n\nRUNNING PROGRAM :)"
-	./$(EXECUTABLE) $(INPUT_FILE) $(OUTPUT_FILE)
+	./$(EXECUTABLE) $(INPUT_FILE) $(BONUS)
 
 debug: CXXFLAGS += -g
 debug: all

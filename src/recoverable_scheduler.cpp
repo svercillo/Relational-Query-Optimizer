@@ -7,7 +7,7 @@ void RecoverableScheduler::schedule_tasks(){ // can only occur after queue popul
         // print_queue();
         while(!queue.empty() && queue.top()->duplicate){
             queue.pop(); // pop any duplicates off
-        }
+        } 
 
         if (queue.empty()){ 
             // if queue is empty after popping all duplicates
@@ -31,6 +31,9 @@ void RecoverableScheduler::schedule_tasks(){ // can only occur after queue popul
             }
             case OPERATIONTYPE_COMMIT: 
             {
+                if (top_node->in_waiting_state){
+                    this->deadlock_time = max(this->current_execution_time, top_node->action->time_offset);
+                }
                 process_commit(top_node);
                 break;
             }
@@ -89,6 +92,7 @@ void RecoverableScheduler::process_read(ActionNode * top_node){
     if (
         last_non_aborted_write_trans_id != ""
         && committed_transactions.find(last_non_aborted_write_trans_id) == committed_transactions.end()
+        && last_non_aborted_write_trans_id != trans_id
     ){ // dirty read
         
         // cout << "DIRTY READ: " << top_node->to_string() << endl;
@@ -126,44 +130,7 @@ void RecoverableScheduler::process_commit(ActionNode * top_node){
         trans_that_are_waiting_for_objs_to_commit.find(trans_id) != trans_that_are_waiting_for_objs_to_commit.end() 
         && trans_that_are_waiting_for_objs_to_commit[trans_id].size() > 0
     ){
-
-        unordered_set<string> waiting_on_trans_id_vec;
-        
-        // check if cycle / deadlock exists
-        for (auto object_id :  trans_that_are_waiting_for_objs_to_commit[trans_id]){
-            string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
-
-            bool a = committed_transactions.find(waiting_on_trans_id) == committed_transactions.end();
-            if (waiting_on_trans_id == "" || is_last_non_aborted_write_to_obj_committed(object_id)){
-                cout << "ERROR !!!!" << endl;
-                cout << "trans_id " << trans_id << endl;
-                cout << "waiting_on_trans_id " << waiting_on_trans_id << endl; 
-                cout << a << endl;
-                cout << is_last_non_aborted_write_to_obj_committed(object_id) << endl;
-                abort();
-            }
-
-            // guaranteed to be non-committed write (dirty read)
-            waiting_on_trans_id_vec.insert(waiting_on_trans_id);
-        }
-
-        for (auto dep_trans_id : waiting_on_trans_id_vec){
-            if (trans_that_are_waiting_for_objs_to_commit.find(dep_trans_id) == trans_that_are_waiting_for_objs_to_commit.end())
-                continue; // dep_trans_id was never waiting on anything
-
-            for (auto object_id : trans_that_are_waiting_for_objs_to_commit[dep_trans_id]){
-                string waiting_on_trans_id = get_last_non_aborted_write_trans_id(object_id);
-
-                if (waiting_on_trans_id == trans_id){
-                    // cycle / deadlock detected
-                    this->deadlock_time = max(this->current_execution_time, top_node->action->time_offset);
-                }
-            }
-        }
-
-        if (deadlock_time == -1)
-            push_action_into_waiting(trans_id, top_node); 
-
+        push_action_into_waiting(trans_id, top_node); 
     } else {
         top_node->in_waiting_state = false; // no longer blocked
     
@@ -240,7 +207,6 @@ void RecoverableScheduler::process_start(ActionNode *top_node){
 
 void RecoverableScheduler::push_action_into_waiting(string trans_id, ActionNode * top_node){
     for (auto object_id : trans_that_are_waiting_for_objs_to_commit[trans_id]){
-            
         if (obj_nodes_are_waiting_on.find(object_id) == obj_nodes_are_waiting_on.end())
             obj_nodes_are_waiting_on.emplace(object_id, unordered_set<ActionNode *>{});
         
@@ -256,7 +222,7 @@ void RecoverableScheduler::push_action_into_waiting(string trans_id, ActionNode 
 void RecoverableScheduler::move_waiting_nodes(string object_id, string trans_id){
     // object has committed so, so any transactions that were waiting for this obj can be moved from waiting
     for (auto action_node : obj_nodes_are_waiting_on[object_id])
-    {
+    {   
         // the transactions waiting on this are no longer waiting (i.e. if read on object_id was blocked, it is no longer)
         if (trans_that_are_waiting_for_objs_to_commit.find(action_node->action->trans_id) != trans_that_are_waiting_for_objs_to_commit.end()){
             if (
@@ -267,11 +233,13 @@ void RecoverableScheduler::move_waiting_nodes(string object_id, string trans_id)
                 trans_that_are_waiting_for_objs_to_commit[action_node->action->trans_id].erase(object_id);
         }
 
-        action_node->duplicate = true; // set current node to duplicate
-        ActionNode *copy_node = new ActionNode(action_node);
-        all_created_nodes.push_back(copy_node);
-        queue.push(copy_node); // action is no longer waiting
-
+        if (!action_node->duplicate){
+            action_node->duplicate = true; // set current node to duplicate
+            ActionNode *copy_node = new ActionNode(action_node);
+            all_created_nodes.push_back(copy_node);
+            queue.push(copy_node); // action is no longer waiting
+        }
+        
         // trans_id is no longer waiting (its being committed)
         if (trans_that_are_waiting_for_objs_to_commit.find(trans_id) != trans_that_are_waiting_for_objs_to_commit.end()){
             if (trans_that_are_waiting_for_objs_to_commit[trans_id].find(object_id) != trans_that_are_waiting_for_objs_to_commit[trans_id].end())

@@ -58,6 +58,9 @@ class CascadelessScheduler : public Scheduler
 
         // for a given transaction, all the objects that this transaction is waiting to be commited
         unordered_map<string, unordered_set<string>> trans_waiting_on_objs;
+
+        // the object a transcation
+        unordered_map<string, string> trans_blocked_on; 
 };
 
 #endif // CASCADELESS_SCHEDULER_H

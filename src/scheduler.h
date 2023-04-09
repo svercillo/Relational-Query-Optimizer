@@ -42,6 +42,7 @@ class Scheduler
         priority_queue<ActionNode *, vector<ActionNode*>, ActionNodeComparator> queue;
         vector<const ActionNode *> nodes;
         vector<ActionNode *> all_created_nodes;
+        unordered_map<string, deque<ActionNode*>> trans_actions;
 
         int deadlock_time = -1; // if  dead lock time is not -1, then a deadlock has occured at  the specified time
 

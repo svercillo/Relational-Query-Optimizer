@@ -3,19 +3,26 @@
 void SerialScheduler::schedule_tasks(){ // can only occur after queue populated
 
     unordered_set<string> trans_ids_set;
+    vector<string> trans_ids;
+
+
     while (!queue.empty()){
         ActionNode* top_node = queue.top();
-
         trans_ids_set.insert(top_node->action->trans_id);
-        if (actions_per_transaction.find(top_node->action->trans_id) == actions_per_transaction.end())
-            actions_per_transaction.emplace(top_node->action->trans_id, vector<ActionNode*>{});
+
+
+        actions_per_transaction.emplace(top_node->action->trans_id, vector<ActionNode*>{});
         
-        actions_per_transaction[top_node->action->trans_id].push_back(top_node);
+        ActionNode * node = queue.top();
+        actions_per_transaction[top_node->action->trans_id].push_back(node);
+        
         queue.pop();
     }
 
-    vector<string> trans_ids;
     for (auto trans_id : trans_ids_set){
+        for (auto node : trans_actions[trans_id]){
+            actions_per_transaction[trans_id].push_back(node);   
+        }
         trans_ids.push_back(trans_id);
     }
 

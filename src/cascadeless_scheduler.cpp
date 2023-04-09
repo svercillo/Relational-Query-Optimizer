@@ -29,6 +29,7 @@ void CascadelessScheduler::schedule_tasks(){ // can only occur after queue popul
             case OPERATIONTYPE_READ: // can have deadlock on reads
             {   
                 if (top_node->in_waiting_state){
+                    // cout << "DEADLOCK ON " << top_node->to_string() << endl;
                     this->deadlock_time = max(this->current_execution_time, top_node->action->time_offset);
                 }
                 process_read(top_node);
@@ -131,7 +132,7 @@ void CascadelessScheduler::process_commit(ActionNode * top_node){
         queue.push(top_node);
     } else {
         top_node->in_waiting_state = false; // no longer blocked
-        // cout << "OBJECTS WRITTEN " << endl;
+
         for (auto object_id : transaction_writes[trans_id]){
             vector<string> write_history = obj_trans_have_written_to[object_id];
 
@@ -185,8 +186,13 @@ void CascadelessScheduler::process_start(ActionNode *top_node){
 }
 
 void CascadelessScheduler::move_waiting_reads(string object_id, string trans_id){
+
+    // if (trans_id == "T2")
+    // cout << "WAITING " << endl;
     for (auto action_node : obj_nodes_are_waiting_on[object_id])
     {
+        // if (trans_id == "T2")
+        // cout << action_node->to_string() << endl;
         // cout << action_node->to_string() << endl;
         // the transactions waiting on this are no longer waiting (i.e. if read on object_id was blocked, it is no longer)
         if (trans_waiting_on_objs.find(action_node->action->trans_id) != trans_waiting_on_objs.end()){
@@ -197,10 +203,12 @@ void CascadelessScheduler::move_waiting_reads(string object_id, string trans_id)
                 trans_waiting_on_objs[action_node->action->trans_id].erase(object_id); // transaction is no longer waiting on this object
         }
 
-        action_node->duplicate = true; // set current node to duplicate
-        ActionNode *copy_node = new ActionNode(action_node);
-        all_created_nodes.push_back(copy_node);
-        queue.push(copy_node); // action is no longer waiting
+        if (!action_node->duplicate){
+            action_node->duplicate = true; // set current node to duplicate
+            ActionNode *copy_node = new ActionNode(action_node);
+            all_created_nodes.push_back(copy_node);
+            queue.push(copy_node); // action is no longer waiting
+        }
 
         // trans_id is no longer waiting (its being committed)
         if (trans_waiting_on_objs.find(trans_id) != trans_waiting_on_objs.end()){
@@ -208,9 +216,6 @@ void CascadelessScheduler::move_waiting_reads(string object_id, string trans_id)
                 trans_waiting_on_objs[trans_id].erase(object_id); // transaction is no longer waiting on this object
         }
     }
-
-    // cout << endl
-    //      << endl;
 }
 
 string CascadelessScheduler::get_last_non_aborted_write_trans_id(string object_id){

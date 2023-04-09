@@ -1,9 +1,10 @@
 #include "scheduler.h"
 
 void Scheduler::populate_queue(vector<const Action *> actions){
+
+    unordered_set<string> trans_ids;
     for (auto action : actions){
         ActionNode *node = new ActionNode(action);
-        queue.push(node);
         all_created_nodes.push_back(node);
 
         if (action->operation_type == OPERATIONTYPE_WRITE){
@@ -12,15 +13,35 @@ void Scheduler::populate_queue(vector<const Action *> actions){
 
             transaction_writes[action->trans_id].insert(action->object_id);
         }
+
+        if (trans_actions.find(action->trans_id) == trans_actions.end())
+            trans_actions.emplace(action->trans_id, deque<ActionNode*>{});
+        
+        trans_actions[action->trans_id].push_back(node);
+
+        trans_ids.insert(action->trans_id);
+    }
+
+    for (auto trans_id : trans_ids){
+        queue.push(trans_actions[trans_id].front());
+        trans_actions[trans_id].pop_front();
     }
 }
 
+
 void Scheduler::insert_node_into_schedule(ActionNode *node){
+
+    string trans_id = node->action->trans_id;
     this->current_execution_time = max(node->action->time_offset, this->current_execution_time);
     node->exec_time = this->current_execution_time;
     this->current_execution_time += 1;
 
     this->nodes.push_back(node);
+    
+    if (trans_actions[trans_id].size() > 0){
+        queue.push(trans_actions[trans_id].front());
+        trans_actions[trans_id].pop_front();
+    }
 }
 
 string Scheduler::to_string(){
