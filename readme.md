@@ -1,61 +1,31 @@
-
-**CSS 448 A2** 
-
+#CSS 448 A2** 
 
 
 
+##Query Optimization
 
 
 
+##Stefan Vercillo
+
+Feb. 7, 23
 
 
 
-
-
-**Query Optimization**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-**Stefan Vercillo**
-
-**Feb. 7, 23**
-
-
-
-**Motivation:**
+##Motivation:
 
 The goal of this assignment is to convert a SQL schema into a NoSQL schema. The NoSQL schema that I have elected to convert into is JSON. My program takes a “pseudo-SQL schema” file as defined in the question as input, parses the strings of this file into a data structure, and then convert this data structure into a valid JSON string which is outputted to a file.
 
 Hence there are two key components of this project, the parsing of input and the dumping of the data in a NoSQL type format. In order to understand both of these components, it is important to understand the underlying data structure and the hierarchy that data is stored in. This will give insight into how the data is stored, and how it efficiently stores data for purposes of this exercise.
 
 
-**Data Structure:**
+##Data Structure:
 
 
 The lowest level of storage is a Column. In SQL, a table is represented by records which adhere to a particular table schema. Each record is a tuple of column values in the order specified by the table schema. Additionally, the type of each column must adhere to the type specified by the table schema. However, in this assignment there is no type specified with columns by default. Below is my representation of a column via the Column struct:
 
+
+```
 struct Column
 
 {
@@ -91,6 +61,8 @@ struct Column
 `        `Column(){}
 
 };
+
+```
 
 
 Each column has a name which characterizes the data that it represents. In addition to the column name, there is a column type which was mentioned previously and a nullable flag. This flag distinguishes whether or not a record’s data for the given column is necessarily not nullable. I have interpreted the assignment such that by default, all columns are nullable, which is the default behaviour in SQL. Column types are an Enum that represents the possible column type values.
