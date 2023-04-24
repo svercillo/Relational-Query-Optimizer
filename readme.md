@@ -509,9 +509,3 @@ Query Tree Visualization:
                                                         OP1                                   
                                                          |                                    
                                                      EMPLOYEE             
-
-
-
-
-
-![image](https://user-images.githubusercontent.com/40708666/233880595-80057e14-10bf-4961-a1de-b31f653fdb73.png)
