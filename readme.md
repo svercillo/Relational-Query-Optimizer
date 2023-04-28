@@ -1,7 +1,4 @@
 
-## CSS 448 A2 
-
-
 # Query Optimization
 
 
