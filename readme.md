@@ -11,10 +11,11 @@ Feb. 7, 23
 
 
 ## Motivation:
+The goal of this project is to parse a database scheema, provided table and column statistics compute an upper bound for query cost in number of I/Os. This is done by generating a query tree, and recursively computing the optimal cost for a given query. The optimal cost of a query can depend on many factors as there is a multitude of permutations that need to be considered. In the example of a simple equijoin on two tables, there are inner nested loop joins, there are full table scans, there are hash joins (on either index of tree hashes if present) and many more. Additionally, the pipelining of the intermediate tables processed in a join saves tremendously on materialization cost. For the most accurate I/O calculations, reduction factor (likelihood of row matching) statistics are recalculated at each depth level of the tree. Additionally, row size reduction is also considered. For example, if a row in a database is 100 bytes long, if a projection occurs so that only two columns with 10 bytes each are respectively selected, then each row can be compressed into 20 bytes, and around five times more rows can be compressed into a single page. 
 
-The goal of this assignment is to convert a SQL schema into a NoSQL schema. The NoSQL schema that I have elected to convert into is JSON. My program takes a “pseudo-SQL schema” file as defined in the question as input, parses the strings of this file into a data structure, and then convert this data structure into a valid JSON string which is outputted to a file.
 
-Hence there are two key components of this project, the parsing of input and the dumping of the data in a NoSQL type format. In order to understand both of these components, it is important to understand the underlying data structure and the hierarchy that data is stored in. This will give insight into how the data is stored, and how it efficiently stores data for purposes of this exercise.
+Once the cost is accurately calculated and displayed, the query is then optimized using a set of rebalancing techinques. Select statements are pushed down the tree to optimize row reduction factors, and a multiplicity of index options are efficiently considered, and the rebalanced query tree is then recalculated with an updated query cost. 
+
 
 
 ## Data Structure:
@@ -443,6 +444,8 @@ Base Table ->EMPLOYEE
 
 Query Tree Visualization: 
 
+```
+
                                                                       RESULT                  
                                                                          |                    
                                                                         OP4                   
@@ -456,7 +459,7 @@ Query Tree Visualization:
                                                      EMPLOYEE                                 
                                                                                               
                                                                                               
-
+```
 
 
 OPTMIZING QUERY .... 
@@ -497,7 +500,7 @@ Base Table ->EMPLOYEE
         Number of Pages: 50000
 
 Query Tree Visualization: 
-
+```
                                                                       RESULT                  
                                                                          |                    
                                                          -------------- OP3 -------------     
@@ -508,4 +511,5 @@ Query Tree Visualization:
                                                          |                                    
                                                         OP1                                   
                                                          |                                    
-                                                     EMPLOYEE             
+                                                     EMPLOYEE
+```
